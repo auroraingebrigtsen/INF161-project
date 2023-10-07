@@ -1,0 +1,52 @@
+# Ignore system files and directories
+.DS_Store
+Thumbs.db
+
+# Ignore Python virtual environment folders (e.g., created by virtualenv or venv)
+venv/
+env/
+*.pyc
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore data and dataset files
+weather_data/
+*.csv
+*.xlsx
+
+# Ignore compiled Python files and directories
+__pycache__/
+*.pyc
+
+# Ignore log files
+*.log
+
+# Ignore editor/IDE-specific files and directories
+.vscode/
+.idea/
+
+# Ignore secret or sensitive information (e.g., API keys, passwords)
+secrets.yaml
+secrets.yml
+
+# Ignore compiled binaries and build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+dist/
+build/
+*.egg-info/
+
+# Ignore temporary or backup files
+*.swp
+*~
+
+# Ignore generated documentation
+doc/
+docs/
+
+# Ignore temp testing file
+temp.txt
+temp.py
