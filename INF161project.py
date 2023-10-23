@@ -1,54 +1,59 @@
 import numpy as np
 import pandas as pd
-import os
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import ElasticNet
+from sklearn.svm import SVR
+from model_selection import ModelSelector
+from sklearn.dummy import DummyRegressor
 from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import train_test_split
+from Preprocessing import merge_dfs
 
-# Read the CSV file with specified data types
-traffic_df = pd.read_csv('trafikkdata.csv', sep="[|;]", engine='python')
+rfr_param_grid = {
+    'n_estimators': [100, 200, 300],
+    'max_depth': [10, 20, 30]
+}
 
-# Replace missing values with nan
-traffic_df['Trafikkmengde'] = traffic_df['Trafikkmengde'].replace('-', np.nan)
+svr_param_grid = {
+    'C': [1, 10, 100],
+    'kernel': ['linear', 'poly', 'rbf', 'sigmoid'],
+}
 
-# Drop unecessary columns
-traffic_df = traffic_df[['Dato','Fra tidspunkt','Trafikkmengde']]
+en_param_grid = {
+    'alpha': [0.1, 0.5, 1.0],
+    'l1_ratio': [0.1, 0.5, 0.9],
+}
 
-# Make a single DateTime column
-traffic_df['Tidspunkt'] = pd.to_datetime(traffic_df['Dato'] + ' ' + traffic_df['Fra tidspunkt'])
 
-traffic_df = traffic_df[['Trafikkmengde', 'Tidspunkt']]
 
-traffic_df.set_index('Tidspunkt', inplace=True)
+def main():
+    df = merge_dfs()
 
-folder_path = "weather_data"
-csv_files = [f for f in os.listdir('weather_data/')]
-weather_df = pd.DataFrame()
+    # Lagre 2023 data til senere
+    data_2023 = df[df['Aarstall'] == 2023]
 
-# Read weather data
-for csv_file in csv_files:
-    file_path = os.path.join(folder_path, csv_file)
-    df = pd.read_csv(file_path)
-    weather_df = pd.concat([weather_df, df], ignore_index=True)
-weather_df.head(50)
+    data = df[df['Aarstall'] != 2023]
+    X = data.drop(['Trafikkmengde'])
+    y = data['Trafikkmengde']
 
-# Make Datetime column
-weather_df['Tidspunkt'] = pd.to_datetime(weather_df['Dato'] + ' ' + weather_df['Tid'])
-weather_df = weather_df.drop(columns=['Dato', 'Tid'])
+    X_train, X_test, y_train, y_test = train_test_split(X, y ,shuffle=False, test_size=0.2)
 
-weather_df.set_index('Tidspunkt', inplace=True)
+    #  Create a baseline model
+    baseline = DummyRegressor()
+    baseline.fit(X_train, y_train)
+    base_pred = baseline.predict(X_test)
+    base_rmse = np.sqrt(mean_squared_error(y_test, base_pred))
+    print(f'Baseline model got RMSE: {base_rmse}')
 
-# Change 9999 vals to NaN
-weather_df = weather_df.replace(9999.99, np.nan)
+    model_selector = ModelSelector(X_train, y_train)
+    model_selector.add_model(RandomForestRegressor(), rfr_param_grid)
+    model_selector.add_model(SVR(), svr_param_grid)
+    model_selector.add_model(ElasticNet(), en_param_grid)
 
-# Make datetime column hourly instead of each 10 min
-resampled_df = weather_df.resample('H').agg(
-    {'Solskinstid':'sum', 'Lufttemperatur': 'mean', 'Vindstyrke': 'mean', 'Lufttrykk': 'mean', 'Vindkast': 'mean', 'Globalstraling': 'mean', 'Vindretning': 'mean' })
+    best_model, best_score, best_params = model_selector.best_estimator()
+    best_pred = best_model.predict(X_test)
+    best_rmse = np.sqrt(mean_squared_error(y_test, best_pred))
+    print(f'Best model is {best_model} with score: {best_rmse}\nModel has parameters: {best_params}')
 
-merged_df = traffic_df.merge(resampled_df, left_index=True, right_index=True) 
-
-# split data
-
-#test different models
-
-#har ikke kommet så langt enda..
+if __name__ == '__main__':
+    main()
