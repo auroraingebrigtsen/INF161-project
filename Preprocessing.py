@@ -86,4 +86,6 @@ def merge_dfs():
     merged_df["Rod_dag"] = merged_df.index.map(lambda x: int(x in norske_helligdager))
 
     merged_df.reset_index(drop=True, inplace=True)
+
+    merged_df = merged_df.dropna(subset=['Trafikkmengde'])
     return merged_df
