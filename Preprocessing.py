@@ -88,4 +88,5 @@ def merge_dfs():
     merged_df.reset_index(drop=True, inplace=True)
 
     merged_df = merged_df.dropna(subset=['Trafikkmengde'])
+    print(merged_df.isna().sum())
     return merged_df

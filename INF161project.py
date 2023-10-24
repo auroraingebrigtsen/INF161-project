@@ -10,20 +10,21 @@ from sklearn.model_selection import train_test_split
 from Preprocessing import merge_dfs
 from sklearn.impute import KNNImputer
 from sklearn.impute import SimpleImputer
+import pickle
 
 rfr_param_grid = {
-    'model__n_estimators': [100, 200, 300],
-    #'max_depth': [10, 20, 30]
+    'model__n_estimators': [100],#, 200, 300],
+    'model__max_depth': [10],#, 20, 30]
 }
 
 svr_param_grid = {
-    'model__C': [1, 10, 100],
-    #'kernel': ['linear', 'poly', 'rbf', 'sigmoid'],
+    'model__C': [1],#, 10, 100],
+    'model__kernel': ['linear'],#, 'poly', 'rbf', 'sigmoid'],
 }
 
 en_param_grid = {
-    'model__alpha': [0.1, 0.5, 1.0],
-    #'l1_ratio': [0.1, 0.5, 0.9],
+    'model__alpha': [0.1],#, 0.5, 1.0],
+    'model__l1_ratio': [0.1],#, 0.5, 0.9],
 }
 
 
@@ -32,7 +33,7 @@ def main():
     df = merge_dfs()
 
     # Lagre 2023 data til senere
-    data_2023 = df[df['Aarstall'] == 2023]
+    data_2023 = df[df['Aarstall'] == 2023].drop(columns=['Trafikkmengde'])
 
     data = df[df['Aarstall'] != 2023]
     print(data.head())
@@ -48,7 +49,7 @@ def main():
     base_rmse = np.sqrt(mean_squared_error(y_test, base_pred))
     print(f'Baseline model got RMSE: {base_rmse}')
 
-    model_selector = ModelSelector(X_train, y_train, imputers=[SimpleImputer(strategy='ffill'), KNNImputer()])
+    model_selector = ModelSelector(X_train, y_train, imputers=[SimpleImputer(strategy='mean'), KNNImputer()])
     model_selector.add_model(RandomForestRegressor(), rfr_param_grid)
     model_selector.add_model(SVR(), svr_param_grid)
     model_selector.add_model(ElasticNet(), en_param_grid)
@@ -63,6 +64,10 @@ def main():
     #  2023 predictions
     pred_2023 = best_model.predict(data_2023)
     pred_2023.to_csv('Predictions.csv', index=False)
+
+    #  Lagre modellen og imputeren
+    pickle.dump(best_model, open('model.pkl', 'wb'))
+    pickle.dump(best_model, open('imputer.pkl', 'wb'))
 
 if __name__ == '__main__':
     main()

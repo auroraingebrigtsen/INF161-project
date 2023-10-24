@@ -16,6 +16,7 @@ class ModelSelector:
         self.imputers = imputers
         self.best_estimator = None
         self.best_score = -1
+        self.best_params = None
         self.best_imputer = None
     
     def tune(self, model, params:dict):
@@ -32,10 +33,12 @@ class ModelSelector:
             grid_search = GridSearchCV(pipeline, params, cv=cv, scoring=self.scoring)
             cv_results = grid_search.fit(self.X_train, self.y_train)
             score = np.sqrt(-cv_results.best_score_) if self.scoring == 'neg_mean_squared_error' else cv_results.best_score_
-            if score > self.best_score:
+            if score < self.best_score:
                 self.best_estimator = cv_results.best_estimator_
                 self.best_score = score
+                self.best_params = cv_results.best_params_
                 self.best_imputer = imputer
+
 
     def add_model(self, model, param_grid:dict) -> None:
         self.tune(model, param_grid)
@@ -43,7 +46,5 @@ class ModelSelector:
     def get_best(self):
         """returns the best model"""
         imputer = self.best_imputer.fit(self.X_train)
-        return self.best_estimator, self.best_score, imputer
-
-
-    
+        best_model = self.best_model.fit(**self.best_params)
+        return best_model, self.best_score, imputer
