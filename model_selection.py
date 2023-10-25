@@ -15,7 +15,7 @@ class ModelSelector:
         self.splits = splits
         self.imputers = imputers
         self.best_estimator = None
-        self.best_score = -1
+        self.best_score = 100
         self.best_params = None
         self.best_imputer = None
     
@@ -34,7 +34,7 @@ class ModelSelector:
             cv_results = grid_search.fit(self.X_train, self.y_train)
             score = np.sqrt(-cv_results.best_score_) if self.scoring == 'neg_mean_squared_error' else cv_results.best_score_
             if score < self.best_score:
-                self.best_estimator = cv_results.best_estimator_
+                self.best_estimator = cv_results.best_estimator_.named_steps['model']
                 self.best_score = score
                 self.best_params = cv_results.best_params_
                 self.best_imputer = imputer
@@ -46,5 +46,6 @@ class ModelSelector:
     def get_best(self):
         """returns the best model"""
         imputer = self.best_imputer.fit(self.X_train)
-        best_model = self.best_model.fit(**self.best_params)
+        self.X_train = self.best_imputer.transform(self.X_train)
+        best_model = self.best_estimator.fit(self.X_train, self.y_train) # Fit on the whole training data
         return best_model, self.best_score, imputer

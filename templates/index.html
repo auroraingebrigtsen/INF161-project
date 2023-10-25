@@ -1,9 +1,27 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title></title>
+    <title>INF161 Prosjekt</title>
   </head>
   <body>
-    <div><h1>Hello world!</h1></div>
+    <h1>INF161 Project: Bike Traffic Prediction</h1>
+    <form action="{{url_for('predict')}}" method='post'>
+      <label for="value1">Dato</label>
+      <input type="date" id="dato" name="dato" required><br><br>
+
+      <label for="value2">Klokkeslett</label>
+      <input type="time" id="klokkeslett" name="klokkeslett" required><br><br>
+
+      <label for="value3">Value 3:</label>
+      <input type="text" id="value3" name="value3" required><br><br>
+
+      <label for="value4">Value 4:</label>
+      <input type="text" id="value4" name="value4" required><br><br>
+
+      <label for="value5">Value 5:</label>
+      <input type="text" id="value5" name="value5" required><br><br>
+
+      <input type="submit" value="Predict">
+    </form>
   </body>
 </html>

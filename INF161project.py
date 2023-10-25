@@ -13,10 +13,10 @@ from sklearn.impute import SimpleImputer
 import pickle
 
 rfr_param_grid = {
-    'model__n_estimators': [100],#, 200, 300],
+    'model__n_estimators': [5],#, 200, 300],
     'model__max_depth': [10],#, 20, 30]
 }
-
+"""
 svr_param_grid = {
     'model__C': [1],#, 10, 100],
     'model__kernel': ['linear'],#, 'poly', 'rbf', 'sigmoid'],
@@ -26,7 +26,7 @@ en_param_grid = {
     'model__alpha': [0.1],#, 0.5, 1.0],
     'model__l1_ratio': [0.1],#, 0.5, 0.9],
 }
-
+"""
 
 
 def main():
@@ -34,8 +34,10 @@ def main():
 
     # Lagre 2023 data til senere
     data_2023 = df[df['Aarstall'] == 2023].drop(columns=['Trafikkmengde'])
+    print(f'2023 data shape {data_2023.shape}')
 
     data = df[df['Aarstall'] != 2023]
+    data = data.dropna(subset=['Trafikkmengde'])
     print(data.head())
     X = data.drop(columns=['Trafikkmengde'])
     y = data['Trafikkmengde']
@@ -51,8 +53,8 @@ def main():
 
     model_selector = ModelSelector(X_train, y_train, imputers=[SimpleImputer(strategy='mean'), KNNImputer()])
     model_selector.add_model(RandomForestRegressor(), rfr_param_grid)
-    model_selector.add_model(SVR(), svr_param_grid)
-    model_selector.add_model(ElasticNet(), en_param_grid)
+    #model_selector.add_model(SVR(), svr_param_grid)
+    #model_selector.add_model(ElasticNet(), en_param_grid)
     best_model, best_score, best_imputer = model_selector.get_best()
     print(f'Best model is {best_model} with score: {best_score}')
 
@@ -62,7 +64,8 @@ def main():
     print(f'Best model got RMSE: {best_rmse} on unseen data')
 
     #  2023 predictions
-    pred_2023 = best_model.predict(data_2023)
+    data_2023 = best_imputer.transform(data_2023)
+    pred_2023 = pd.DataFrame(data=best_model.predict(data_2023))
     pred_2023.to_csv('Predictions.csv', index=False)
 
     #  Lagre modellen og imputeren

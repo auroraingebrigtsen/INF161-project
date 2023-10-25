@@ -1,7 +1,12 @@
 from flask import Flask, render_template, request
 from waitress import serve
+import pickle
+import numpy as np
+import pandas as pd
 
 app = Flask(__name__)
+
+#model = pickle.load(open('model.pkl', 'rb'))
 
 @app.route('/')
 def home():
@@ -9,13 +14,44 @@ def home():
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    ''' 
+    Rendering results on HTML
+    '''
     # get data
-    features = dict(request.form)  
+    features = dict(request.form)   
     
-    # render with new prediction_text
-    return render_template(
-        './index.html',
-        prediction_text='Predicted price ...')
+    # expected keys
+    numeric_features = ['LotFrontage', 'LotArea', 'OverallQual', 'YrSold']
+    categorical_features = ['Street', 'HouseStyle', 'BsmtQual', 'GarageCond']
+    
+    # handle wrong input
+    def to_numeric(key, value, numeric_features = numeric_features):
+        if key not in numeric_features:
+            return value
+        try:
+            return float(value)
+        except:
+            return np.nan
+    features = {key: to_numeric(key, value) for key, value in features.items()}
+
+    # prepare for prediction
+    features_df = pd.DataFrame(features, index=[0]).loc[:, numeric_features + categorical_features]
+    print(features_df)
+    
+    # sjekk input
+    if features_df.loc[0, 'LotArea'] <= 0:
+        return render_template('./index.html',
+                               prediction_text='LotArea must be positive')
+
+    # predict
+    #prediction = model.predict(features_df)
+    #prediction = np.round(prediction[0])
+    #prediction = np.clip(prediction, 0, np.inf)
+
+    # prepare output
+    #return render_template('./index.html',
+    #                       prediction_text='Predicted price {}'.format(prediction))
+
 
 
 if __name__ == '__main__':
