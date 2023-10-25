@@ -34,15 +34,18 @@ def main():
 
     # Lagre 2023 data til senere
     data_2023 = df[df['Aarstall'] == 2023].drop(columns=['Trafikkmengde'])
-    print(f'2023 data shape {data_2023.shape}')
 
+    # Droppe kolonner der trafikkmengde er nan
     data = df[df['Aarstall'] != 2023]
     data = data.dropna(subset=['Trafikkmengde'])
-    print(data.head())
+
+    # Dele i features og target, og splitte datasettet i trenings-og testdata
     X = data.drop(columns=['Trafikkmengde'])
     y = data['Trafikkmengde']
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y ,shuffle=False, test_size=0.2)
+    # Splitter dataen
+    X_train, X_valtest, y_train, y_valtest = train_test_split(X, y ,shuffle=False, test_size=0.3)
+    X_val, X_test, y_val, y_test = train_test_split(X_valtest, y_valtest ,shuffle=False, test_size=0.5)
 
     #  Create a baseline model
     baseline = DummyRegressor()

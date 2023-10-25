@@ -2,26 +2,95 @@
 <html>
   <head>
     <title>INF161 Prosjekt</title>
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    >
   </head>
   <body>
-    <h1>INF161 Project: Bike Traffic Prediction</h1>
-    <form action="{{url_for('predict')}}" method='post'>
-      <label for="value1">Dato</label>
-      <input type="date" id="dato" name="dato" required><br><br>
+    <div class="container">
+      <h1 class="mt-5">INF161 Prosjekt</h1>
+      <h3>Sykkeltrafikk over Nygårdsbroen</h3>
+      <p>Fyll inn verdier for å predikere hvor mange som sykler over Nygårdsbroen på et gitt tidspunkt!</p>
+    </div>
+    <form class="container mt-3" action="{{ url_for('predict') }}" method="post">
+      <div class="form-group">
+        <label for="dato">Dato:</label>
+        <input type="date" class="form-control" id="dato" name="dato" required>
+      </div>
 
-      <label for="value2">Klokkeslett</label>
-      <input type="time" id="klokkeslett" name="klokkeslett" required><br><br>
+      <div class="form-group">
+        <label for="klokkeslett">Klokkeslett:</label>
+        <select class="form-control" id="klokkeslett" name="klokkeslett" required>
+          <option value="00">00:00-01:00</option>
+          <option value="01">01:00-02:00</option>
+          <option value="02">02:00-03:00</option>
+          <option value="03">03:00-04:00</option>
+          <option value="04">04:00-05:00</option>
+          <option value="05">05:00-06:00</option>
+          <option value="06">06:00-07:00</option>
+          <option value="07">07:00-08:00</option>
+          <option value="08">08:00-09:00</option>
+          <option value="09">09:00-10:00</option>
+          <option value="10">10:00-11:00</option>
+          <option value="11">11:00-12:00</option>
+          <option value="12">12:00-13:00</option>
+          <option value="13">13:00-14:00</option>
+          <option value="14">14:00-15:00</option>
+          <option value="15">15:00-16:00</option>
+          <option value="16">16:00-17:00</option>
+          <option value="17">17:00-18:00</option>
+          <option value="18">18:00-19:00</option>
+          <option value="19">19:00-20:00</option>
+          <option value="20">20:00-21:00</option>
+          <option value="21">21:00-22:00</option>
+          <option value="22">22:00-23:00</option>
+          <option value="23">23:00-00:00</option>
+        </select>
+      </div>
 
-      <label for="value3">Value 3:</label>
-      <input type="text" id="value3" name="value3" required><br><br>
+      <div class="form-group">
+        <label for="solskinstid">Solskinstid (0-60):</label>
+        <input type="number" class="form-control" id="solskinstid" name="solskinstid" min="0" max="60">
+      </div>
 
-      <label for="value4">Value 4:</label>
-      <input type="text" id="value4" name="value4" required><br><br>
+      <div class="form-group">
+        <label for="lufttemperatur">Lufttemperatur:</label>
+        <input type="number" class="form-control" id="lufttemperatur" name="lufttemperatur" step="0.01">
+      </div>
 
-      <label for="value5">Value 5:</label>
-      <input type="text" id="value5" name="value5" required><br><br>
+      <div class="form-group">
+        <label for="vindstyrke">Vindstyrke:</label>
+        <input type="number" class="form-control" id="vindstyrke" name="vindstyrke" step="0.01">
+      </div>
 
-      <input type="submit" value="Predict">
+      <div class="form-group">
+        <label for="lufttrykk">Lufttrykk:</label>
+        <input type="number" class="form-control" id="lufttrykk" name="lufttrykk" step="0.01">
+      </div>
+
+      <div class="form-group">
+        <label for="vindkast">Vindkast:</label>
+        <input type="number" class="form-control" id="vindkast" name="vindkast" step="0.01">
+      </div>
+
+      <div class="form-group">
+        <label for="globalstraling">Globalstraling:</label>
+        <input type="number" class="form-control" id="globalstraling" name="globalstraling" step="0.01">
+      </div>
+
+      <div class="form-group">
+        <label for="vindretning">Vindretning:</label>
+        <input type="number" class="form-control" id="vindretning" name="vindretning" step="0.01">
+      </div>
+
+      <button type="submit" class="btn btn-primary">Predict</button>
+      <button type="reset" class="btn btn-secondary">Reset</button>
     </form>
+    <br>
+    <div class="container">
+      <p class="alert alert-success"><b>Predikert antall syklister: {{prediction}}</b></p>
+    </div>
+
   </body>
 </html>

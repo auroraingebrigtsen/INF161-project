@@ -3,10 +3,11 @@ from waitress import serve
 import pickle
 import numpy as np
 import pandas as pd
+import holidays
 
 app = Flask(__name__)
 
-#model = pickle.load(open('model.pkl', 'rb'))
+model = pickle.load(open('model.pkl', 'rb'))
 
 @app.route('/')
 def home():
@@ -18,39 +19,56 @@ def predict():
     Rendering results on HTML
     '''
     # get data
-    features = dict(request.form)   
-    
-    # expected keys
-    numeric_features = ['LotFrontage', 'LotArea', 'OverallQual', 'YrSold']
-    categorical_features = ['Street', 'HouseStyle', 'BsmtQual', 'GarageCond']
-    
-    # handle wrong input
-    def to_numeric(key, value, numeric_features = numeric_features):
-        if key not in numeric_features:
+    features = dict(request.form)
+
+    numerical_inputs = ["solskinstid", "lufttemperatur", "vindstyrke", "lufttrykk", "vindkast", "globalstraling", "vindretning"]
+
+    def to_numeric(key, value, numeric_inputs = numerical_inputs):
+        if key not in numeric_inputs:
             return value
         try:
             return float(value)
         except:
             return np.nan
+    
     features = {key: to_numeric(key, value) for key, value in features.items()}
 
-    # prepare for prediction
-    features_df = pd.DataFrame(features, index=[0]).loc[:, numeric_features + categorical_features]
-    print(features_df)
+    def red_day(date) -> bool:
+        norwegian_reddays = holidays.Norway(years=range(2010, 2024))
+        return date in norwegian_reddays
     
+    # definere features ut fra dato og klokkeslett
+    def datetime_features(feature_dict:dict) -> dict:
+        dato = pd.to_datetime(feature_dict["dato"])
+        feature_dict["Maaned"] = dato.month
+        feature_dict["Aarstall"] = dato.year
+        feature_dict["Ukedag"] = dato.weekday()
+        feature_dict["Rod_dag"] = red_day(dato)
+        del feature_dict["dato"]
+        return feature_dict
+
+    features = datetime_features(features)
+
+
+
+    # prepare for prediction
+    features_df = pd.DataFrame(features, index=[0])
+    print(features_df)
+
+
     # sjekk input
-    if features_df.loc[0, 'LotArea'] <= 0:
-        return render_template('./index.html',
-                               prediction_text='LotArea must be positive')
+    #if features_df.loc[0, 'LotArea'] <= 0:
+    #    return render_template('./index.html',
+    #                           prediction_text='LotArea must be positive')
 
     # predict
-    #prediction = model.predict(features_df)
-    #prediction = np.round(prediction[0])
-    #prediction = np.clip(prediction, 0, np.inf)
+    prediction = model.predict(features_df)
+    prediction = np.round(prediction[0])
+    prediction = np.clip(prediction, 0, np.inf)
 
     # prepare output
-    #return render_template('./index.html',
-    #                       prediction_text='Predicted price {}'.format(prediction))
+    return render_template('./index.html',
+                           prediction=prediction)
 
 
 
