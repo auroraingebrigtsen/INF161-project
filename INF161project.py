@@ -44,8 +44,7 @@ def main():
     y = data['Trafikkmengde']
 
     # Splitter dataen
-    X_train, X_valtest, y_train, y_valtest = train_test_split(X, y ,shuffle=False, test_size=0.3)
-    X_val, X_test, y_val, y_test = train_test_split(X_valtest, y_valtest ,shuffle=False, test_size=0.5)
+    X_train, X_test, y_train, y_test = train_test_split(X, y ,shuffle=False, test_size=0.3)
 
     #  Create a baseline model
     baseline = DummyRegressor()
@@ -73,7 +72,7 @@ def main():
 
     #  Lagre modellen og imputeren
     pickle.dump(best_model, open('model.pkl', 'wb'))
-    pickle.dump(best_model, open('imputer.pkl', 'wb'))
+    pickle.dump(best_imputer, open('imputer.pkl', 'wb'))
 
 if __name__ == '__main__':
     main()
