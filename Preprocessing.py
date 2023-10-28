@@ -85,8 +85,9 @@ def merge_dfs():
     norske_helligdager = holidays.Norway(years=range(2010, 2024))
     merged_df["Rod_dag"] = merged_df.index.map(lambda x: int(x in norske_helligdager))
 
-    merged_df.reset_index(drop=True, inplace=True)
+    print(merged_df.describe())
 
-    # merged_df = merged_df.dropna(subset=['Trafikkmengde']) fjerner denne 
+    # Sette globalstråling verdier som er mindre enn 0 til nan
+    merged_df.loc[merged_df["Globalstraling"] < 0, "Globalstraling"] = np.nan
     print(merged_df.isna().sum())
     return merged_df

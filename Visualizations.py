@@ -1,11 +1,6 @@
 import matplotlib.pyplot as plt
-import plotly.express as px
+import seaborn as sns
 
-# Check correlation between variables
-correlation_df = merged_df.corr()
-correlation_df
-
-# function to plot a basic bar plot
 
 def barplot(df, x_column, y_column, x_label=None, y_label=None, title=None, x_labels=None):
     """Groups the dataand lots a basic plot using matplotlib"""
@@ -23,12 +18,9 @@ def barplot(df, x_column, y_column, x_label=None, y_label=None, title=None, x_la
     
     plt.show()
 
-
-barplot(
-    df = merged_df, 
-    x_column = "Klokkeslett", 
-    y_column = "Trafikkmengde", 
-    x_label = "Klokkeslett", 
-    y_label = "Gjennomsnittelig trafikkmengde", 
-    title = 'Gjennomsnittelig trafikkmengde per time av døgnet'
-    )
+def correlations(df):
+    correlations = df.corr()
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(correlations, annot=True, cmap="coolwarm")
+    plt.title("Correlation Matrix Heatmap")
+    plt.show()
