@@ -16,20 +16,20 @@ import pickle
 
 rfr_param_grid = {
     'model__random_state': [42],
-    'model__n_estimators': [100, 200, 300],
+    'model__n_estimators': [200, 300],
     'model__max_depth': [10, 20, 30]
 }
 
 svr_param_grid = {
     'model__C': [1, 10, 100],
-    'model__kernel': ['linear', 'poly', 'rbf', 'sigmoid'],
+    'model__kernel': ['poly', 'rbf', 'sigmoid'],
 }
 
 mlp_param_grid = {
-    'model__hidden_layer_sizes': [(50, 50), (100, 50, 25), (50,)],  # Sizes of hidden layers
-    'model__activation': ['relu', 'tanh', 'logistic'],  # Activation function
-    'model__learning_rate': ['constant', 'adaptive'],  # Learning rate schedule
-    'model__random_state': [42],  # Random seed for reproducibility
+    'model__random_state': [42],
+    'model__hidden_layer_sizes': [50, 100, 200], 
+    'model__activation': ['relu', 'tanh', 'logistic'],  
+    'model__learning_rate': ['constant', 'adaptive']
 }
 
 
@@ -125,7 +125,7 @@ def main():
     # Feature selection på den beste modellen
     features_to_check = ['Solskinstid', 'Lufttemperatur', 'Vindstyrke', 'Lufttrykk', 'Vindkast',
                          'Globalstraling', 'Vindretning']
-    feature_selector = FeatureSelector(best_model, X_train, y_train, 3, features=features_to_check, imputer=best_imputer, scaler=best_scaler)
+    feature_selector = FeatureSelector(best_model, X_train, y_train, 2, features=features_to_check, imputer=best_imputer, scaler=best_scaler)
     feature_selector.fit()
     dropped_cols, reduced_X_train, best_model, best_imputer, best_scaler = feature_selector.get_best()
     print(f'Feature selector found that by dropping {dropped_cols} RMSE changes by {feature_selector.get_difference()}')
