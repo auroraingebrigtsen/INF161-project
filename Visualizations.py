@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pandas as pd
 
 
 def barplot(df, x_column, y_column, x_label=None, y_label=None, title=None, x_labels=None):
@@ -23,4 +24,18 @@ def correlations(df):
     plt.figure(figsize=(10, 8))
     sns.heatmap(correlations, annot=True, cmap="coolwarm")
     plt.title("Correlation Matrix Heatmap")
+    plt.show()
+
+def line_plots(df, x, y, lines):
+    if isinstance(df.index, pd.DatetimeIndex):
+        df['Year'] = df.index.year
+    else:
+        raise ValueError("The DataFrame should have a DateTimeIndex to extract the year.")
+
+    grouped_data = df.groupby([lines, x])[y].sum()
+    unstacked = grouped_data.unstack(level=0)
+    unstacked.plot(marker='o')
+    plt.title(f'Sum {y} hver {x}')
+    plt.xlabel(f'{x}')
+    plt.ylabel(f'Sum av {y}')
     plt.show()

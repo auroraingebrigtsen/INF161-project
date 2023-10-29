@@ -65,6 +65,9 @@ def prepare_weatherdata():
     
     # Sjekke at nye verdier gir mening, ex. at max solskinstid <= 60
     print(resampled_df.describe())
+
+    # Sette globalstråling verdier som er mindre enn 0 til nan
+    resampled_df.loc[resampled_df["Globalstraling"] < 0, "Globalstraling"] = np.nan
     return resampled_df
 
 def merge_dfs():
@@ -79,15 +82,11 @@ def merge_dfs():
     # Splitte datetime kolonnen
     merged_df['Ukedag'] = merged_df.index.weekday
     merged_df["Maaned"] = merged_df.index.month
-    merged_df["Aarstall"] = merged_df.index.year
+    #merged_df["Aarstall"] = merged_df.index.year
     merged_df["Klokkeslett"] = merged_df.index.hour
 
     norske_helligdager = holidays.Norway(years=range(2010, 2024))
     merged_df["Rod_dag"] = merged_df.index.map(lambda x: int(x in norske_helligdager))
 
-    print(merged_df.describe())
-
-    # Sette globalstråling verdier som er mindre enn 0 til nan
-    merged_df.loc[merged_df["Globalstraling"] < 0, "Globalstraling"] = np.nan
     print(merged_df.isna().sum())
     return merged_df

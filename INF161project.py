@@ -10,7 +10,7 @@ from preprocessing import merge_dfs
 from sklearn.impute import KNNImputer
 from sklearn.impute import SimpleImputer
 from sklearn.neural_network import MLPRegressor
-from visualizations import barplot, correlations
+from visualizations import barplot, correlations, line_plots
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import pickle
 
@@ -39,10 +39,13 @@ def main():
     df = merge_dfs()
 
     # Lagre 2023 data til senere
-    data_2023 = df[df['Aarstall'] == 2023].drop(columns=['Trafikkmengde'])
+    is_2023 = "2023-01-01 00:00:00"
+    data_2023 = df.loc[df.index >= is_2023].drop(columns=['Trafikkmengde'])
+    #data_2023 = df[df['Aarstall'] == 2023].drop(columns=['Trafikkmengde'])
 
     # Droppe kolonner der trafikkmengde er nan
-    data = df[df['Aarstall'] != 2023]
+    data = df.loc[df.index < is_2023]
+    #data = df[df['Aarstall'] != 2023]
     data = data.dropna(subset=['Trafikkmengde'])
 
     # Dele i features og target, og splitte datasettet i trenings-og testdata
@@ -57,7 +60,46 @@ def main():
     correlations(train_df)
 
     # Visualisere treningsdata
-
+    barplot(
+        df = train_df, 
+        x_column = "Klokkeslett", 
+        y_column = "Trafikkmengde", 
+        x_label = "Klokkeslett", 
+        y_label = "Gjennomsnittelig trafikkmengde", 
+        title = 'Gjennomsnittelig trafikkmengde per time av døgnet'
+        )
+    
+    barplot(
+        df = train_df, 
+        x_column = "Ukedag", 
+        y_column = "Trafikkmengde", 
+        x_label = "Ukedag", 
+        y_label = "Gjennomsnittelig trafikkmengde", 
+        title = 'Gjennomsnittelig trafikkmengde per Ukedag',
+        x_labels = ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"]
+        )
+    
+    barplot(
+        df = train_df, 
+        x_column = "Maaned", 
+        y_column = "Trafikkmengde", 
+        x_label = "Måned", 
+        y_label = "Gjennomsnittelig trafikkmengde", 
+        title = 'Gjennomsnittelig trafikkmengde per måned',
+        x_labels = ["Jan", "Feb", "Mars", "April", "Mai", "Juni", "Juli", "Aug", "Sept", "Okt", "Nov", "Des"]
+        )
+    
+    barplot(
+        df = train_df, 
+        x_column = train_df.index.year, 
+        y_column = "Trafikkmengde", 
+        x_label = "År", 
+        y_label = "Gjennomsnittelig trafikkmengde", 
+        title = 'Gjennomsnittelig trafikkmengde per År'
+        )
+    
+    line_plots(train_df, x="Maaned", y="Trafikkmengde", lines=train_df.index.year)
+    line_plots(train_df, x="Klokkeslett", y="Trafikkmengde", lines=train_df.index.year)
 
     # Sjekke om dataen er poisson-fordelt
     print(f'\nMean: {np.mean(y_train)}\nVariance: {np.var(y_train)}\n')

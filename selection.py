@@ -9,7 +9,18 @@ from sklearn.impute import SimpleImputer
 from itertools import combinations
 
 class ModelSelector:
-    def __init__(self, X_train:pd.DataFrame, y_train:pd.Series, imputers:list, scalers:list, scoring='neg_mean_squared_error', splits=5):
+    def __init__(self, X_train:pd.DataFrame, y_train:pd.Series, imputers:list, scalers:list, scoring='neg_mean_squared_error', splits:int=5) -> None:
+        """
+        Initialize a ModelSelector instance.
+
+        Parameters:
+        - X_train: pd.DataFrame, the feature data for training
+        - y_train: pd.Series, the target data for training
+        - imputers: list, a list of imputation techniques to be evaluated
+        - scalers: list, a list of scaling methods to be evaluated
+        - scoring: str, the scoring metric used for model evaluation (default is 'neg_mean_squared_error').
+        - splits: int, the number of time series splits for cross-validation (default is 5).
+        """
         self.X_train = X_train
         self.y_train = y_train
         self.scoring = scoring
@@ -17,12 +28,19 @@ class ModelSelector:
         self.imputers = imputers
         self.scalers = scalers
         self.best_estimator = None
-        self.best_score = 100 # dete kan være baseline score
+        self.best_score = 10000
         self.best_params = None
         self.best_imputer = None
     
     def tune(self, model, params:dict):
-        """TODO"""
+        """
+        Search for hyperparameters of a model using different imputers and scalers.
+        Finds the optimal hyperparameters, imputation technique and scaler.
+
+        Parameters:
+        - model: the machine learning model to be tuned
+        - params: dict, hyperparameters to include in search
+        """
         for imputer in self.imputers:
             for scaler in self.scalers:
                 pipeline = Pipeline([
@@ -43,19 +61,48 @@ class ModelSelector:
 
 
     def add_model(self, model, param_grid:dict) -> None:
+        """
+        Add and tune a new machine learning model.
+
+        Parameters:
+        - model: the machine learning model to be added and tuned
+        - param_grid: dict, hyperparameters to include in search
+        """
         self.tune(model, param_grid)
 
     def get_best(self):
-        """returns the best model"""
-        imputer = self.best_imputer.fit(self.X_train)
+        """
+        Get the results from the search.
+
+        Returns:
+        - best_model: the best-tuned machine learning model
+        - best_score: the score of the best-tuned model
+        - imputer: the best imputer used for preprocessing
+        - scaler: the best feature scaler used for preprocessing
+        """
+        imputer = self.best_imputer.fit(self.X_train) # Fit imputer, scaler and model on whole training data
         scaler = self.best_scaler.fit(self.X_train)
         self.X_train = self.best_imputer.transform(self.X_train)
-        best_model = self.best_estimator.fit(self.X_train, self.y_train) # Fit on the whole training data
+        self.X_train = self.best_scaler.transform(self.X_train)
+        best_model = self.best_estimator.fit(self.X_train, self.y_train)
         return best_model, self.best_score, imputer, scaler
     
 
 class FeatureSelector():
     def __init__(self, model, X_train: pd.DataFrame, y_train: pd.DataFrame, max_combos:int, features:list, imputer, scaler, splits:int=5) -> None:
+        """
+        Initialize a FeatureSelector instance.
+
+        Parameters:
+        - model: a machine learning model 
+        - X_train: pd.DataFrame, the feature data for training
+        - y_train: pd.Series, the target data for training
+        - max_combos: int, the maximum number of feature combinations to explore.
+        - features: list, feature names to be selected from
+        - imputer: the imputer used for data preprocessing
+        - scaler: the feature scaler used for data preprocessing
+        - splits: int, the number of time series splits for cross-validation (default is 5)
+        """
         self.model = model
         self.X = X_train
         self.y = y_train
@@ -69,7 +116,15 @@ class FeatureSelector():
         self.initial_score = 10000
 
     def test_performance(self, X_variant):
-        """Performs K-fold to test performance of a dataframe"""
+        """
+        Performs K-fold cross-validation to test the performance of a feature set.
+
+        Parameters:
+        - X_variant: pd.DataFrame, the variant of input features to evaluate
+
+        Returns:
+        - The RMSE (Root Mean Squared Error) of the model's performance.
+        """
         cv = TimeSeriesSplit(n_splits=self.splits)
         scores = cross_val_score(self.model, X_variant, self.y, cv=cv, scoring='neg_mean_squared_error')
         return np.sqrt(-np.mean(scores))
@@ -107,28 +162,13 @@ class FeatureSelector():
     
     def get_best(self):
         self.X = self.X.drop(columns=self.features_to_drop)
-        self.imputer = self.imputer.fit_transform(self.X)
-        self.scaler = self.scaler.fit_transform(self.X)
+        self.imputer = self.imputer.fit(self.X)
+        self.scaler = self.scaler.fit(self.X)
+        self.X = self.best_imputer.transform(self.X)
+        self.X = self.best_scaler.transform(self.X)
         self.model.fit(self.X, self.y)
         return self.features_to_drop, self.X, self.model, self.imputer, self.scaler
     
     def get_difference(self) -> float:
         return self.best_score - self.initial_score
     
-"""
-def scaler_selector(scalers, models, X_train, y_train, base_rmse=10000, splits=5):
-    best_rmse = base_rmse
-    best_scaler = None
-    
-    for scaler in scalers:
-        cv = TimeSeriesSplit(n_splits=splits)
-        total_rmse = [np.sqrt(-np.mean(cross_val_score(model, scaler.fit_transform(X_train), y_train, cv=cv, scoring='neg_mean_squared_error'))) for model in models]
-        mean_rmse = np.mean(total_rmse)
-        print(f'Using {type(scaler).__name__}, Models got mean RMSE: {mean_rmse}')
-        if mean_rmse < best_rmse:
-            best_rmse = mean_rmse
-            best_scaler = scaler
-
-    print(f'The best scaler is {type(best_scaler).__name__} with RMSE: {best_rmse}')
-    return best_scaler
-"""
