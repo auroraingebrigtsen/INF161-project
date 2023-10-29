@@ -13,7 +13,7 @@ from sklearn.neural_network import MLPRegressor
 from visualizations import barplot, correlations, line_plots
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import pickle
-"""
+
 rfr_param_grid = {
     'model__random_state': [42],
     'model__n_estimators': [200, 300],
@@ -24,14 +24,13 @@ svr_param_grid = {
     'model__C': [1, 10, 100],
     'model__kernel': ['poly', 'rbf', 'sigmoid'],
 }
-"""
+
 mlp_param_grid = {
     'model__random_state': [42],
-    'model__hidden_layer_sizes': [10]}#, 100, 200], 
-"""
+    'model__hidden_layer_sizes': [10, 100, 200], 
     'model__activation': ['relu', 'tanh', 'logistic']
 }
-"""
+
 
 def main():
     df = merge_dfs()
@@ -114,8 +113,8 @@ def main():
     imputers = [KNNImputer()] # SimpleImputer(strategy='mean'), 
     scalers = [MinMaxScaler(feature_range=(0,1))] # StandardScaler()
     model_selector = ModelSelector(X_train, y_train, imputers=imputers, scalers=scalers, splits=2) #TODO CHANGE SPLITS
-    #model_selector.add_model(RandomForestRegressor(), rfr_param_grid)
-    #model_selector.add_model(SVR(), svr_param_grid)
+    model_selector.add_model(RandomForestRegressor(), rfr_param_grid)
+    model_selector.add_model(SVR(), svr_param_grid)
     model_selector.add_model(MLPRegressor(), mlp_param_grid)
     best_model, best_score, best_imputer, best_scaler = model_selector.get_best()
     print(f'Best model is {best_model} with score: {best_score}')
