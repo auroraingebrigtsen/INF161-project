@@ -50,3 +50,4 @@ docs/
 # Ignore temp testing file
 temp.txt
 temp.py
+temp.ipynb
