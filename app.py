@@ -16,9 +16,7 @@ def home():
 @app.route('/predict', methods=['POST'])
 def predict():
     ''' 
-    Rendering results on HTML
     '''
-    # get data
     features = dict(request.form)
 
     numerical_inputs = ["solskinstid", "lufttemperatur", "vindstyrke", "lufttrykk", "vindkast", "globalstraling", "vindretning"]
@@ -41,7 +39,7 @@ def predict():
     def datetime_features(feature_dict:dict) -> dict:
         dato = pd.to_datetime(feature_dict["dato"])
         feature_dict["Maaned"] = dato.month
-        feature_dict["Aarstall"] = dato.year
+        #feature_dict["Aarstall"] = dato.year
         feature_dict["Ukedag"] = dato.weekday()
         feature_dict["Rod_dag"] = red_day(dato)
         del feature_dict["dato"]

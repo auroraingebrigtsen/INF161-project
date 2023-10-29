@@ -13,7 +13,7 @@ from sklearn.neural_network import MLPRegressor
 from visualizations import barplot, correlations, line_plots
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import pickle
-
+"""
 rfr_param_grid = {
     'model__random_state': [42],
     'model__n_estimators': [200, 300],
@@ -24,16 +24,14 @@ svr_param_grid = {
     'model__C': [1, 10, 100],
     'model__kernel': ['poly', 'rbf', 'sigmoid'],
 }
-
+"""
 mlp_param_grid = {
     'model__random_state': [42],
-    'model__hidden_layer_sizes': [50, 100, 200], 
-    'model__activation': ['relu', 'tanh', 'logistic'],  
-    'model__learning_rate': ['constant', 'adaptive']
+    'model__hidden_layer_sizes': [10]}#, 100, 200], 
+"""
+    'model__activation': ['relu', 'tanh', 'logistic']
 }
-
-
-
+"""
 
 def main():
     df = merge_dfs()
@@ -53,7 +51,7 @@ def main():
     y = data['Trafikkmengde']
 
     # Splitter dataen
-    X_train, X_test, y_train, y_test = train_test_split(X, y ,shuffle=False, test_size=0.3)
+    X_train, X_test, y_train, y_test = train_test_split(X, y ,shuffle=False, test_size=0.2)
 
     # Korrelasjonsmatrise
     train_df = pd.concat([X_train, y_train], axis=1)
@@ -113,11 +111,11 @@ def main():
 
 
     # Model selection
-    imputers = [SimpleImputer(strategy='mean'), KNNImputer()]
-    scalers = [MinMaxScaler(feature_range=(0,1)), StandardScaler()]
-    model_selector = ModelSelector(X_train, y_train, imputers=imputers, scalers=scalers)
-    model_selector.add_model(RandomForestRegressor(), rfr_param_grid)
-    model_selector.add_model(SVR(), svr_param_grid)
+    imputers = [KNNImputer()] # SimpleImputer(strategy='mean'), 
+    scalers = [MinMaxScaler(feature_range=(0,1))] # StandardScaler()
+    model_selector = ModelSelector(X_train, y_train, imputers=imputers, scalers=scalers, splits=2) #TODO CHANGE SPLITS
+    #model_selector.add_model(RandomForestRegressor(), rfr_param_grid)
+    #model_selector.add_model(SVR(), svr_param_grid)
     model_selector.add_model(MLPRegressor(), mlp_param_grid)
     best_model, best_score, best_imputer, best_scaler = model_selector.get_best()
     print(f'Best model is {best_model} with score: {best_score}')
@@ -125,16 +123,16 @@ def main():
     # Feature selection på den beste modellen
     features_to_check = ['Solskinstid', 'Lufttemperatur', 'Vindstyrke', 'Lufttrykk', 'Vindkast',
                          'Globalstraling', 'Vindretning']
-    feature_selector = FeatureSelector(best_model, X_train, y_train, 2, features=features_to_check, imputer=best_imputer, scaler=best_scaler)
+    feature_selector = FeatureSelector(best_model, X_train, y_train, 1, features=features_to_check, imputer=best_imputer, scaler=best_scaler, splits=2) #TODO CHANGE SPLITS
     feature_selector.fit()
-    dropped_cols, reduced_X_train, best_model, best_imputer, best_scaler = feature_selector.get_best()
+    dropped_cols, _reduced_X_train, best_model, best_imputer, best_scaler = feature_selector.get_best()
     print(f'Feature selector found that by dropping {dropped_cols} RMSE changes by {feature_selector.get_difference()}')
     print(f'Initial RMSE: {feature_selector.initial_score} \nNew RMSE: {feature_selector.best_score}')
 
     # Evaluering av den beste modellen
     reduced_X_test = X_test.drop(columns=dropped_cols)
-    reduced_X_test = best_scaler.transform(reduced_X_test)
-    X_test = pd.DataFrame(best_imputer.transform(reduced_X_test), columns=reduced_X_train.columns)
+    reduced_X_test = pd.DataFrame(best_imputer.transform(reduced_X_test), columns=reduced_X_test.columns)
+    X_test = pd.DataFrame(best_scaler.transform(reduced_X_test), columns=reduced_X_test.columns)
     best_pred = best_model.predict(X_test)
     best_rmse = np.sqrt(mean_squared_error(y_test, best_pred))
     print(f'Best model got RMSE: {best_rmse} on unseen data')
@@ -142,7 +140,7 @@ def main():
     #  2023 predictions
     dato_2023 = pd.Series(data_2023.index.date)
     tid_2023 = pd.Series(data_2023.index.time)
-    data_2023 = pd.DataFrame(best_imputer.transform(data_2023.drop(columns=dropped_cols)), columns=reduced_X_train.columns)
+    data_2023 = pd.DataFrame(best_imputer.transform(data_2023.drop(columns=dropped_cols)), columns=reduced_X_test.columns)
     pred_2023 = pd.Series(best_model.predict(data_2023)).astype(int)
     result_2023 = pd.DataFrame({'Dato': dato_2023, 'Tid': tid_2023, 'Prediksjon': pred_2023})
     result_2023.to_csv('Predictions.csv', index=False)

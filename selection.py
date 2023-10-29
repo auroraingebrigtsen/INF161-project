@@ -49,7 +49,7 @@ class ModelSelector:
                     ('model', model)
                 ])
                 cv = TimeSeriesSplit(n_splits=self.splits)
-                grid_search = GridSearchCV(pipeline, params, cv=cv, scoring=self.scoring)
+                grid_search = GridSearchCV(pipeline, params, cv=cv, scoring=self.scoring, n_jobs=-1)
                 cv_results = grid_search.fit(self.X_train, self.y_train)
                 score = np.sqrt(-cv_results.best_score_) if self.scoring == 'neg_mean_squared_error' else cv_results.best_score_
                 if score < self.best_score:
@@ -110,9 +110,9 @@ class FeatureSelector():
         self.imputer = imputer
         self.scaler = scaler
         self.max_combos = max_combos
-        self.features = features # list containing names of the features you want to select from
-        self.features_to_drop = None # name of the optimal combination of features
-        self.best_score = 10000 # Her kan jeg ha initial score ? TODO
+        self.features = features 
+        self.features_to_drop = None 
+        self.best_score = 10000 
         self.initial_score = 10000
 
     def test_performance(self, X_variant):
@@ -123,7 +123,7 @@ class FeatureSelector():
         - X_variant: pd.DataFrame, the variant of input features to evaluate
 
         Returns:
-        - The RMSE (Root Mean Squared Error) of the model's performance.
+        - The RMSE of the model's performance.
         """
         cv = TimeSeriesSplit(n_splits=self.splits)
         scores = cross_val_score(self.model, X_variant, self.y, cv=cv, scoring='neg_mean_squared_error')
@@ -132,7 +132,10 @@ class FeatureSelector():
 
     def find_combos(self):
         """
+        Generates all possible combinations of features.
 
+        Returns:
+        - combo_list: a list of feature combinations
         """
         combo_list = []
         for i in range(self.max_combos):
@@ -144,7 +147,7 @@ class FeatureSelector():
 
     def fit(self) -> None:
         """
-
+        Fits the FeatureSelector by identifying the best set of features to drop.
         """
         features = self.X.columns
         self.X = self.imputer.transform(self.X)
@@ -161,14 +164,30 @@ class FeatureSelector():
                 self.features_to_drop = combination
     
     def get_best(self):
+        """
+        Get the model, scaler and imputer fitted on the new features after feature selection
+
+        Returns:
+        - features_to_drop: list, features to drop.
+        - X: pd.DataFrame, the data after feature selection.
+        - model: the machine learning model fitted on new X
+        - imputer: the imputer fitted on new X
+        - scaler: the feature scaler fitted on new X
+        """        
         self.X = self.X.drop(columns=self.features_to_drop)
         self.imputer = self.imputer.fit(self.X)
         self.scaler = self.scaler.fit(self.X)
-        self.X = self.best_imputer.transform(self.X)
-        self.X = self.best_scaler.transform(self.X)
+        self.X = self.imputer.transform(self.X)
+        self.X = self.scaler.transform(self.X)
         self.model.fit(self.X, self.y)
         return self.features_to_drop, self.X, self.model, self.imputer, self.scaler
     
     def get_difference(self) -> float:
+        """
+        Calculate the difference between the initial and best scores.
+
+        Returns:
+        - difference: float, the difference between initial and best scores
+        """
         return self.best_score - self.initial_score
     
